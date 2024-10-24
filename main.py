@@ -1,7 +1,6 @@
 import pandas as pd
-from scipy import stats
-import torch
 from linearRegression import train_linear_regression
+from decisionTree import train_decision_tree
 from dataVisualization import DataVisualization
 
 
@@ -23,6 +22,7 @@ df = df.drop(df.loc[df['Electrical'].isnull()].index, errors='ignore')
 
 
 # Handle Outliers
+from scipy import stats
 z_scores = stats.zscore(df['GrLivArea'])
 outliers = df[(z_scores > 3) | (z_scores < -3)]
 outliers = outliers.sort_values(by='GrLivArea', ascending=False)
@@ -51,20 +51,15 @@ from sklearn.decomposition import PCA
 pca = PCA(n_components=0.95)
 X_pca = pca.fit_transform(X_scaled)
 
-
 # Data splitting
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X_pca, y, test_size=0.2, random_state=42)
 
-# Convert to PyTorch tensors
-X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
-X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
-y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32).view(-1, 1)
-y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).view(-1, 1)
-
 
 model_choice = input("Enter 0 (Linear Regression) or 1 (Decision Tree): ")
 if model_choice == '0':
-    train_linear_regression(X_train_tensor, X_test_tensor, y_train_tensor, y_test_tensor)
+    train_linear_regression(X_train, X_test, y_train, y_test)
+elif model_choice == '1':
+    train_decision_tree(X_train, X_test, y_train, y_test)
 else:
     print("Invalid input. Please enter 0 or 1.")

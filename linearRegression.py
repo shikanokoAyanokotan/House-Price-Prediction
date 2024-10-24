@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import pickle
 
 
 # R-squared
@@ -22,12 +23,22 @@ class LinearRegressionModel(nn.Module):
         return self.linear(x)
 
 
-def train_linear_regression(X_train_tensor, X_test_tensor, y_train_tensor, y_test_tensor):
+def train_linear_regression(X_train, X_test, y_train, y_test):
+    # Convert to PyTorch tensors
+    X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
+    X_test_tensor = torch.tensor(X_test, dtype=torch.float32)
+    y_train_tensor = torch.tensor(y_train.values, dtype=torch.float32).view(-1, 1)
+    y_test_tensor = torch.tensor(y_test.values, dtype=torch.float32).view(-1, 1)
+
+    
+    # Define loss and optimizer
     input_dim = X_train_tensor.shape[1]
     model = LinearRegressionModel(input_dim)
     criterion = nn.MSELoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)
 
+
+    # Training
     for epoch in range(1000):
         optimizer.zero_grad()
         output = model(X_train_tensor)
@@ -38,8 +49,17 @@ def train_linear_regression(X_train_tensor, X_test_tensor, y_train_tensor, y_tes
         # Training loss and accuracy
         if (epoch + 1) % 100 == 0:
             print(f"Epoch [{epoch + 1} / 1000], Loss = {loss.item():.4f}, R-squared = {R_squared(output.detach().numpy(), y_train_tensor.detach().numpy()):.4f}")
-    
-    prediction = model(X_test_tensor).detach().numpy()
-    print(f'Test R-squared: {R_squared(prediction, y_test_tensor.detach().numpy()):.4f}')
 
+    predict = model(X_test_tensor).detach().numpy()
+    actual = y_test_tensor.detach().numpy()
+    print(f'Test R-squared: {R_squared(predict, actual):.4f}')
+
+
+    # Save the model
+    model_pkl_file = "LinearRegressionModel.pkl"
+    with open(model_pkl_file, 'wb') as file:
+        pickle.dump(model, file)
+        print("Save model successfully.")
+
+    
     return model
